@@ -10,6 +10,8 @@ def clear_tag(tag_str: str) -> str:
     return tag_str[tag_str.find('}') + 1:]
 
 
+
+# https://stackoverflow.com/questions/7684333/converting-xml-to-dictionary-using-elementtree
 def etree_to_dict(t):
     d = {clear_tag(t.tag): {} if t.attrib else None}
     children = list(t)
@@ -119,4 +121,5 @@ def main():
         log_out.write(f'Конец работы программы: {datetime.datetime.now()}\n')
 
 
-main()
+if __name__ == '__main__':
+    main()
