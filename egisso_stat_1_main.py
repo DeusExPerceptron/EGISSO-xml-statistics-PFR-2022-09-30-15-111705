@@ -10,7 +10,6 @@ def clear_tag(tag_str: str) -> str:
     return tag_str[tag_str.find('}') + 1:]
 
 
-# https://stackoverflow.com/questions/7684333/converting-xml-to-dictionary-using-elementtree
 def etree_to_dict(t):
     d = {clear_tag(t.tag): {} if t.attrib else None}
     children = list(t)
@@ -53,16 +52,17 @@ def main():
         log_out.write(f'Начало работы программы: {time_stamp}\n')
 
     for xml_file in xml_filenames:
-        xml_root = etree.parse(xml_file).getroot()
-        xml_dict = etree_to_dict(xml_root)
+        try:
+            xml_root = etree.parse(xml_file).getroot()
+            xml_dict = etree_to_dict(xml_root)
 
-        facts_list = xml_dict['data']['package']['elements']['fact']
+            facts_list = xml_dict['data']['package']['elements']['fact']
 
-        if isinstance(facts_list, dict):
-            facts_list = [facts_list]
+            if isinstance(facts_list, dict):
+                facts_list = [facts_list]
 
-        for fact in facts_list:
-            try:
+            for fact in facts_list:
+
                 lmsz_id = fact['LMSZID']
 
                 decision_date = datetime.datetime.strptime(fact['decision_date'], '%Y-%m-%d')
@@ -77,17 +77,18 @@ def main():
                     fact_amount = decimal.Decimal(fact['assignment_info']['monetary_form']['amount'])
                 elif 'natural_form' in fact['assignment_info'].keys():
                     fact_amount = decimal.Decimal(fact['assignment_info']['natural_form']['equivalentAmount'])
-            except Exception as e:
-                with open('stat.log', 'a', encoding='utf-8') as log_out:
-                    log_out.write(f'{xml_file}\n')
-                    log_out.write(f'{e}\n')
-                continue
 
-            if f'{decision_year}+{lmsz_id}' not in xml_stat.keys():
-                xml_stat[f'{decision_year}+{lmsz_id}'] = {'facts_count': 0, 'total_amount': 0}
+                if f'{decision_year}+{lmsz_id}' not in xml_stat.keys():
+                    xml_stat[f'{decision_year}+{lmsz_id}'] = {'facts_count': 0, 'total_amount': 0}
 
-            xml_stat[f'{decision_year}+{lmsz_id}']['facts_count'] += 1
-            xml_stat[f'{decision_year}+{lmsz_id}']['total_amount'] += fact_amount
+                xml_stat[f'{decision_year}+{lmsz_id}']['facts_count'] += 1
+                xml_stat[f'{decision_year}+{lmsz_id}']['total_amount'] += fact_amount
+
+        except Exception as e:
+            with open('stat.log', 'a', encoding='utf-8') as log_out:
+                log_out.write(f'{xml_file}\n')
+                log_out.write(f'{e}\n')
+            continue
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -118,5 +119,4 @@ def main():
         log_out.write(f'Конец работы программы: {datetime.datetime.now()}\n')
 
 
-if __name__ == '__main__':
-    main()
+main()
